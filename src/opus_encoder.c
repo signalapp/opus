@@ -941,6 +941,7 @@ static opus_int32 encode_multiframe_packet(OpusEncoder *st,
    opus_int32 bytes_per_frame;
    opus_int32 cbr_bytes;
    opus_int32 repacketize_len;
+   int dtx_count = 0;
    int tmp_len;
    ALLOC_STACK;
 
@@ -992,7 +993,8 @@ static opus_int32 encode_multiframe_packet(OpusEncoder *st,
       {
          RESTORE_STACK;
          return OPUS_INTERNAL_ERROR;
-      }
+      } else if (tmp_len==1)
+         dtx_count++;
 
       ret = opus_repacketizer_cat(rp, tmp_data+i*bytes_per_frame, tmp_len);
 
@@ -1003,7 +1005,7 @@ static opus_int32 encode_multiframe_packet(OpusEncoder *st,
       }
    }
 
-   ret = opus_repacketizer_out_range_impl(rp, 0, nb_frames, data, repacketize_len, 0, !st->use_vbr);
+   ret = opus_repacketizer_out_range_impl(rp, 0, nb_frames, data, repacketize_len, 0, !st->use_vbr && (dtx_count==0));
 
    if (ret<0)
    {
